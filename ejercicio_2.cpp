@@ -18,70 +18,67 @@ using namespace std;
 //Variable global
 double saldo = 100000.00;
 
-//Semaforo
+//Semáforo
 sem_t sem;
 
-//Funcion para poder retirar dinero 
-void* retirar(void* arg){
-    double * dinero_retirado = (double*)arg;
+//Función para poder retirar dinero 
+void* retirar(void* arg) {
+    double* dinero_retirado = (double*)arg;
     
-    //Siempre intenta acceder al semaforo antes
+    //Verificar que exista disponibilidad o sino esperar
     sem_wait(&sem);
 
-    if(*dinero_retirado <= saldo){
+    if (*dinero_retirado <= saldo) {
         saldo -= *dinero_retirado;
-        printf("Saldo de %d ha sido retirado con exito\n",*dinero_retirado);
-        printf("Saldo restante es de: %d", saldo);
-    }
-    else{
-        printf("AVISO! No se pudo realizar la transaccion, el saldo no es suficiente \n");
-        printf("Saldo restante es de %d\n",saldo);
+        printf("Saldo de Q%.2f ha sido retirado con éxito.\n", *dinero_retirado);
+        printf("Saldo restante es de: Q%.2f\n", saldo);
+    } else {
+        printf("AVISO! Retiro de Q%.2f no se pudo realizar\n",*dinero_retirado);
+        printf("Saldo restante es de: Q%.2f\n", saldo);
     }
 
+    //Liberar el semáforo
     sem_post(&sem);
     pthread_exit(NULL);
-
-
 }
 
-int main(){
+int main() {
     int cant_clientes;
 
-    //Inicializacion del semaforo para 1 cliente a la vez
-    sem_init(&sem,0,1);
+    //Inicialización del semáforo para 1 cliente a la vez
+    sem_init(&sem, 0, 1);
 
-    printf("Ingrese el numero de clientes >\n") ;
+    //Solicitar la cantidad de clientes
+    cout << "Ingrese el número de clientes: ";
     cin >> cant_clientes;
 
-    //Crear arreglos
+    //Crear arreglos para hilos y montos
     pthread_t hilos[cant_clientes];
     double montos[cant_clientes];
 
-    //Pedir la cantidad que desea cada cliente y guardarlo en montos
-    for (int i = 0; i < cant_clientes; i++ ){
-        printf("Para el cliente # %i, ingrese su monto a reritar > \n",i+1);
+    //Pedir la cantidad que desea retirar cada cliente 
+    for (int i = 0; i < cant_clientes; i++) {
+        cout << "Para el cliente #" << i + 1 << ", ingrese su monto a retirar: Q";
+        //guardarlo en montos
         cin >> montos[i];
     }
 
-    printf("Montos y Clientes guardados con exito!");
+    cout << "Montos y clientes guardados con éxito!\n";
 
-    //Crear hilos para cada cliente
-    for(int i = 0; i < cant_clientes; i++){
-        pthread_create(&hilos[i],NULL,retirar,&montos[i]);
+    //Crear hilos por cliente
+    for (int i = 0; i < cant_clientes; i++) {
+        pthread_create(&hilos[i], NULL, retirar, &montos[i]);
     }
 
-    //Unir todos
-     for(int i = 0; i < cant_clientes; i++){
-        pthread_join(hilos[i],NULL);
+    // Unir los hilos
+    for (int i = 0; i < cant_clientes; i++) {
+        pthread_join(hilos[i], NULL);
     }
 
-    //destruir el sem
+    // Destruir el semáforo
     sem_destroy(&sem);
 
-
-    printf("Las transacciones han terminado");
-
+    cout << "Las transacciones han terminado.\n";
 
     return 0;
-
 }
